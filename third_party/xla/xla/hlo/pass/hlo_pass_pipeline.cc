@@ -16,6 +16,7 @@ limitations under the License.
 #include "xla/hlo/pass/hlo_pass_pipeline.h"
 
 #include <cstddef>
+#include <cstdio>
 #include <optional>
 #include <string>
 #include <vector>
@@ -222,12 +223,26 @@ absl::StatusOr<bool> HloPassPipeline::RunPassesInternal(
       compilation_stats_->StartPass(pass_name);
     }
     RecordPassStartMetadata(*hlo, pass_name, pipeline_name);
+#ifdef WHITEFOX_XLA_INSTRUMENTATION
+    fprintf(stderr,
+            "WHITEFOX_PASS_START pipeline=%s pass=%s module=%s\n",
+            pipeline_name.c_str(),
+            pass_name.c_str(),
+            hlo->name().c_str());
+#endif
     auto status_or_changed = RunHelper(pass, hlo, execution_threads);
     if (auto status = status_or_changed.status(); !status.ok()) {
       compilation_stats_->RecordPassError(
           pass_name, absl::StatusCodeToString(status.code()));
     }
     TF_ASSIGN_OR_RETURN(bool pass_changed, status_or_changed);
+#ifdef WHITEFOX_XLA_INSTRUMENTATION
+    fprintf(stderr,
+            "WHITEFOX_PASS_END pipeline=%s pass=%s changed=%d\n",
+            pipeline_name.c_str(),
+            pass_name.c_str(),
+            pass_changed ? 1 : 0);
+#endif
     if (verify_pass_changed_report) {
       VerifyPassChangedReport(hlo, pass_changed, debug_options, pass_name,
                               pipeline_name, hash_before.value());

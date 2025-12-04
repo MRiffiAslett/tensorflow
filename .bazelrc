@@ -972,3 +972,15 @@ test:rbe_cross_compile_macos_x86 --jobs=100
 common --java_runtime_version=remotejdk_21
 
 # LINT.ThenChange(//xla/tensorflow.bazelrc)
+# --- XLA fuzzing config (custom) ---
+# Fuzz config used for building the wheel
+build:fuzz --config=dbg
+build:fuzz --copt=-g
+build:fuzz --copt=-fno-omit-frame-pointer
+build:fuzz --linkopt=-fno-omit-frame-pointer
+build:fuzz --strip=never
+
+# NO Clang sanitizers here – they break the big shared lib link
+# You get your feedback from your own XLA instrumentation.
+build:fuzz --copt=-DWHITEFOX_XLA_INSTRUMENTATION
+
